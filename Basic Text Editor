@@ -7,12 +7,17 @@ import java.awt.event.WindowEvent;
 import java.io.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.Font;
+import java.awt.event.*;
+import javax.swing.text.DefaultEditorKit;
 
 public class Basic_Text_Editor{
     private JFrame frame;
     private JTextArea textArea;
     private JFileChooser fileChooser;
     private boolean isTextSaved;
+    private JSpinner fontsizespinner;
+    private JComboBox<String> fontBox;
+    private Font currentFont;
 
     public Basic_Text_Editor() {
         frame = new JFrame("Basic Text Editor");
@@ -31,10 +36,67 @@ public class Basic_Text_Editor{
         JMenuItem openItem = new JMenuItem("Open");
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem saveAsItem = new JMenuItem("Save As");
+        JMenuItem exitItem = new JMenuItem("Exit");
+        
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        saveAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+        
+        exitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+        exitItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handleWindowClosing();
+            }
+        });
+        
+        openItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                openFile();
+            }
+        });
+
+        saveItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveFile();
+            }
+        });
+
+        saveAsItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveFileAs();
+            }
+        });
+
+        
         fileMenu.add(openItem);
+        fileMenu.addSeparator();
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
+        fileMenu.addSeparator();
+        fileMenu.add(exitItem);
         
+        JMenuItem fontFamilyItem = new JMenuItem("Font Family");
+        fontFamilyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
+        fontFamilyItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                selectFontFamily();
+            }
+        });
+        
+        
+        JMenuItem cutItem = new JMenuItem(new DefaultEditorKit.CutAction());
+        cutItem.setText("Cut");
+        cutItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
+
+        JMenuItem copyItem = new JMenuItem(new DefaultEditorKit.CopyAction());
+        copyItem.setText("Copy");
+        copyItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+
+        JMenuItem pasteItem = new JMenuItem(new DefaultEditorKit.PasteAction());
+        pasteItem.setText("Paste");
+        pasteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+
+       
         JToolBar toolbar = new JToolBar();
         JButton boldButton = new JButton("Bold");
         JButton italicButton = new JButton("Italic");
@@ -61,6 +123,9 @@ public class Basic_Text_Editor{
         JMenu editMenu = new JMenu("Edit");
         JMenuItem textSizeItem = new JMenuItem("Text Size");
         JMenuItem textColorItem = new JMenuItem("Text Color");
+        
+        textSizeItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
+        textColorItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 
         textSizeItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -76,9 +141,13 @@ public class Basic_Text_Editor{
             }
         });
 
-
+        editMenu.add(cutItem);
+        editMenu.add(copyItem);
+        editMenu.add(pasteItem);
+        editMenu.addSeparator();
         editMenu.add(textSizeItem);
         editMenu.add(textColorItem);
+        editMenu.add(fontFamilyItem);
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
@@ -94,7 +163,16 @@ public class Basic_Text_Editor{
         frame.setVisible(true);
     }
 
-    
+    private void selectFontFamily() {
+        String[] fontFamilies = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+        String selectedFontFamily = (String) JOptionPane.showInputDialog(frame, "Select Font Family:", "Font Family",
+                JOptionPane.PLAIN_MESSAGE, null, fontFamilies, textArea.getFont().getFamily());
+
+        if (selectedFontFamily != null) {
+            Font currentFont = textArea.getFont();
+            textArea.setFont(new Font(selectedFontFamily, currentFont.getStyle(), currentFont.getSize()));
+        }
+    }
 
     private void openFile() {
         int returnValue = fileChooser.showOpenDialog(null);
