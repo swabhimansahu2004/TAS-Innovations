@@ -1,0 +1,169 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.Font;
+
+public class Basic_Text_Editor{
+    private JFrame frame;
+    private JTextArea textArea;
+    private JFileChooser fileChooser;
+    private boolean isTextSaved;
+
+    public Basic_Text_Editor() {
+        frame = new JFrame("Basic Text Editor");
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setSize(800, 600);
+
+        textArea = new JTextArea();
+        textArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        frame.add(new JScrollPane(textArea), BorderLayout.CENTER);
+
+        fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files (*.txt)", "txt"));
+
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem openItem = new JMenuItem("Open");
+        JMenuItem saveItem = new JMenuItem("Save");
+        JMenuItem saveAsItem = new JMenuItem("Save As");
+        fileMenu.add(openItem);
+        fileMenu.add(saveItem);
+        fileMenu.add(saveAsItem);
+        
+        JToolBar toolbar = new JToolBar();
+        JButton boldButton = new JButton("Bold");
+        JButton italicButton = new JButton("Italic");
+
+        boldButton.addActionListener(e -> {
+            Font currentFont = textArea.getFont();
+            Font newFont = new Font(currentFont.getName(), currentFont.getStyle() | Font.BOLD, currentFont.getSize());
+            textArea.setFont(newFont);
+        });
+
+        italicButton.addActionListener(e -> {
+            Font currentFont = textArea.getFont();
+            Font newFont = new Font(currentFont.getName(), currentFont.getStyle() | Font.ITALIC, currentFont.getSize());
+            textArea.setFont(newFont);
+        });
+
+        toolbar.add(boldButton);
+        toolbar.add(italicButton);
+
+        frame.add(toolbar, BorderLayout.SOUTH);
+
+        
+        
+        JMenu editMenu = new JMenu("Edit");
+        JMenuItem textSizeItem = new JMenuItem("Text Size");
+        JMenuItem textColorItem = new JMenuItem("Text Color");
+
+        textSizeItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int newSize = Integer.parseInt(JOptionPane.showInputDialog(frame, "Enter new text size:"));
+                textArea.setFont(new Font(textArea.getFont().getFamily(), textArea.getFont().getStyle(), newSize));
+            }
+        });
+
+        textColorItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Color newColor = JColorChooser.showDialog(frame, "Choose Text Color", textArea.getForeground());
+                textArea.setForeground(newColor);
+            }
+        });
+
+
+        editMenu.add(textSizeItem);
+        editMenu.add(textColorItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        frame.setJMenuBar(menuBar);
+
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                handleWindowClosing();
+            }
+        });
+
+        frame.setVisible(true);
+    }
+
+    
+
+    private void openFile() {
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(selectedFile));
+                textArea.read(reader, null);
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveFile() {
+        if (fileChooser.getSelectedFile() == null) {
+            saveFileAs();
+            return;
+        }
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileChooser.getSelectedFile()));
+            textArea.write(writer);
+            writer.close();
+            isTextSaved = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveFileAs() {
+        int returnValue = fileChooser.showSaveDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(selectedFile));
+                textArea.write(writer);
+                writer.close();
+                isTextSaved = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleWindowClosing() {
+        if (!isTextSaved) {
+            int result = JOptionPane.showConfirmDialog(frame, "Do you want to save the changes before closing?",
+                    "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+
+            if (result == JOptionPane.YES_OPTION) {
+                saveFile();
+                if (isTextSaved) {
+                    frame.dispose();
+                }
+            } else if (result == JOptionPane.NO_OPTION) {
+                frame.dispose();
+            }
+        } else {
+            frame.dispose();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new Basic_Text_Editor();
+            }
+        });
+    }
+}
